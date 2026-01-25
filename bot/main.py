@@ -102,7 +102,7 @@ class MeetingBot(commands.Bot):
                         text_channel = member.guild.get_channel(session.text_channel_id)
                         if text_channel:
                             await text_channel.send(
-                                f"⚠️ **Meeting ended due to connection failure**\n"
+                                f"**Meeting ended due to connection failure**\n"
                                 f"Meeting ID: `{session.meeting_id[:8]}`\n"
                                 f"The bot was disconnected and could not reconnect after {self.max_reconnect_attempts} attempts."
                             )
@@ -153,7 +153,7 @@ class MeetingBot(commands.Bot):
                     text_channel = guild.get_channel(session.text_channel_id)
                     if text_channel:
                         await text_channel.send(
-                            f"✅ **Reconnected successfully**\n"
+                            f"**Reconnected successfully**\n"
                             f"Meeting ID: `{session.meeting_id[:8]}`\n"
                             f"Recording resumed after temporary disconnection."
                         )
@@ -188,7 +188,7 @@ async def start_meeting(interaction: discord.Interaction):
     user = interaction.user
     if not isinstance(user, discord.Member) or not user.voice:
         await interaction.followup.send(
-            "❌ You must be in a voice channel to start a meeting.",
+            "Error: You must be in a voice channel to start a meeting.",
             ephemeral=True
         )
         return
@@ -197,7 +197,7 @@ async def start_meeting(interaction: discord.Interaction):
     if bot.meeting_manager.is_meeting_active(guild_id):
         existing = bot.meeting_manager.get_active_meeting(guild_id)
         await interaction.followup.send(
-            f"❌ A meeting is already in progress (ID: `{existing.meeting_id[:8]}`)\n"
+            f"Error: A meeting is already in progress (ID: `{existing.meeting_id[:8]}`)\n"
             f"Use `/end-meeting` to stop it first.",
             ephemeral=True
         )
@@ -212,7 +212,7 @@ async def start_meeting(interaction: discord.Interaction):
         )
         
         if not success:
-            await interaction.followup.send(f"❌ Failed to start meeting: {error}", ephemeral=True)
+            await interaction.followup.send(f"Error: Failed to start meeting: {error}", ephemeral=True)
             return
         
         try:
@@ -222,13 +222,13 @@ async def start_meeting(interaction: discord.Interaction):
             voice_client = interaction.guild.voice_client
             if not voice_client:
                 bot.meeting_manager.end_meeting(guild_id)
-                await interaction.followup.send("❌ Failed to connect to voice channel", ephemeral=True)
+                await interaction.followup.send("Error: Failed to connect to voice channel", ephemeral=True)
                 return
         except Exception as e:
             logger.error(f"Voice connection error: {e}")
             bot.meeting_manager.end_meeting(guild_id)
             await interaction.followup.send(
-                f"❌ Failed to connect to voice: {str(e)}",
+                f"Error: Failed to connect to voice: {str(e)}",
                 ephemeral=True
             )
             return
@@ -244,16 +244,16 @@ async def start_meeting(interaction: discord.Interaction):
             await voice_client.disconnect(force=False)
             bot.meeting_manager.end_meeting(guild_id)
             await interaction.followup.send(
-                f"❌ Failed to start recording: {rec_error}",
+                f"Error: Failed to start recording: {rec_error}",
                 ephemeral=True
             )
             return
         
         await interaction.followup.send(
-            f"✅ **Meeting started!**\n"
-            f"📍 Voice Channel: {voice_channel.mention}\n"
-            f"🆔 Meeting ID: `{session.meeting_id[:8]}`\n"
-            f"🎙️ Recording in progress...\n\n"
+            f"**Meeting started successfully**\n"
+            f"Voice Channel: {voice_channel.mention}\n"
+            f"Meeting ID: `{session.meeting_id[:8]}`\n"
+            f"Recording in progress...\n\n"
             f"Use `/end-meeting` to stop recording."
         )
         
@@ -265,7 +265,7 @@ async def start_meeting(interaction: discord.Interaction):
     except Exception as e:
         logger.error(f"Unexpected error in start-meeting: {e}", exc_info=True)
         await interaction.followup.send(
-            "❌ An unexpected error occurred. Please try again.",
+            "Error: An unexpected error occurred. Please try again.",
             ephemeral=True
         )
 
@@ -277,7 +277,7 @@ async def end_meeting(interaction: discord.Interaction):
     guild_id = interaction.guild.id
     if not bot.meeting_manager.is_meeting_active(guild_id):
         await interaction.followup.send(
-            "❌ No active meeting to end.",
+            "Error: No active meeting to end.",
             ephemeral=True
         )
         return
@@ -288,7 +288,7 @@ async def end_meeting(interaction: discord.Interaction):
     if not voice_client:
         bot.meeting_manager.end_meeting(guild_id)
         await interaction.followup.send(
-            "⚠️ Meeting state cleaned up (bot was not in voice channel).",
+            "Warning: Meeting state cleaned up (bot was not in voice channel).",
             ephemeral=True
         )
         return
@@ -308,7 +308,7 @@ async def end_meeting(interaction: discord.Interaction):
         success, ended_session, error = bot.meeting_manager.end_meeting(guild_id)
         
         if not success:
-            await interaction.followup.send(f"⚠️ {error}", ephemeral=True)
+            await interaction.followup.send(f"Warning: {error}", ephemeral=True)
             return
         
         duration = ended_session.duration_seconds()
@@ -316,14 +316,14 @@ async def end_meeting(interaction: discord.Interaction):
         seconds = int(duration % 60)
         
         response = (
-            f"✅ **Meeting ended!**\n"
-            f"🆔 Meeting ID: `{ended_session.meeting_id[:8]}`\n"
-            f"⏱️ Duration: {minutes}m {seconds}s\n"
+            f"**Meeting ended successfully**\n"
+            f"Meeting ID: `{ended_session.meeting_id[:8]}`\n"
+            f"Duration: {minutes}m {seconds}s\n"
         )
         
         if recording_info:
-            response += f"👥 Recorded {recording_info['user_count']} user(s)\n"
-            response += f"📁 Saved to: `{recording_info['output_dir']}`"
+            response += f"Recorded {recording_info['user_count']} user(s)\n"
+            response += f"Saved to: `{recording_info['output_dir']}`"
         
         await interaction.followup.send(response)
         
@@ -343,7 +343,7 @@ async def end_meeting(interaction: discord.Interaction):
             pass
         
         await interaction.followup.send(
-            "⚠️ Meeting ended with errors. State has been cleaned up.",
+            "Warning: Meeting ended with errors. State has been cleaned up.",
             ephemeral=True
         )
 

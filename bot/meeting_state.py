@@ -1,6 +1,6 @@
 from datetime import datetime
 from enum import Enum
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 import uuid
 
 
@@ -27,6 +27,16 @@ class MeetingSession:
         self.end_timestamp: Optional[datetime] = None
         self.status = MeetingStatus.RECORDING
         self.recording_path: Optional[str] = None
+        self.chunk_ids: List[str] = []  # Track chunks for this meeting
+        
+    def add_chunk(self, chunk_id: str) -> None:
+        """Register a chunk ID with this meeting."""
+        if chunk_id not in self.chunk_ids:
+            self.chunk_ids.append(chunk_id)
+    
+    def get_chunk_count(self) -> int:
+        """Get the number of chunks in this meeting."""
+        return len(self.chunk_ids)
         
     def end(self) -> None:
         self.status = MeetingStatus.ENDED
